@@ -7,6 +7,7 @@ import torch
 import dataset
 from models.ConResNet import ConResNet
 from models.ConResNet_mod import ConResNet_mod
+from models.Co_Con import Co_Con
 import utils.metrics
 from utils.metrics import ConfusionMatrix
 from utils.metrics import compute_channel_dice
@@ -25,13 +26,14 @@ from sklearn.metrics import f1_score
 from scipy.ndimage.morphology import binary_erosion
 
 
+
 def predictor(PATH, data_loader):
 
     # 2 channel label, 2 classes
     model_path = PATH + '/ConResNet_BEST.pth'
     path_list = glob.glob('F:/LungCancerData/valid/*/')
     input_size = (80, 128, 160)
-    model = ConResNet_mod(input_size, num_classes=2, weight_std=True)
+    model = Co_Con(input_size, num_classes=2, weight_std=True)
     model.load_state_dict(torch.load(model_path))
 
     model = model.cuda()
@@ -154,8 +156,10 @@ def predictor(PATH, data_loader):
 
             tp, fp, tn, fn = primary_matrix.get_matrix()
             print(f'Primary: tp = {tp}, fp = {fp}, tn = {tn}, fn = {fn}, Total = {tp + fp + tn + fn}')
+            print(f'Total primary tumor area = {tp + fn}')
             tp, fp, tn, fn = lymph_matrix.get_matrix()
             print(f'Lymph: tp = {tp}, fp = {fp}, tn = {tn}, fn = {fn}, Total = {tp + fp + tn + fn}')
+            print(f'Total lymph node area = {tp + fn}')
 
             recall_p = utils.metrics.recall(confusion_matrix=primary_matrix)
             recall_l = utils.metrics.recall(confusion_matrix=lymph_matrix)
@@ -226,7 +230,7 @@ def predictor(PATH, data_loader):
     eval_df.loc['Median'] = eval_df.median()
     eval_df.loc['Std'] = eval_df.std()
     print(eval_df)
-    eval_df.to_csv(PATH + '/prediction_valid_ConResNet_BEST.csv', mode='w')
+    eval_df.to_csv(PATH + '/prediction_valid_BEST.csv', mode='w')
     print(f'Evaluation csv saved in {os.getcwd()}')
 
     print('End of validation')
@@ -235,77 +239,8 @@ def predictor(PATH, data_loader):
         f'Total DSC: {(sum(primary_dice) + sum(lymph_dice)) / (len(primary_dice) + len(lymph_dice)):.4f}      '
         f'Primary: {sum(primary_dice) / len(primary_dice):.4f}     Lymph: {sum(lymph_dice) / len(lymph_dice):.4f}')
 
-    # print(f'f1_p_list[0:5] = {f1_p_list[0:5]}, f1_l_list[0:5] = {f1_l_list[0:5]}')
-    # print(f'sum(f1_p_list) = {sum(f1_p_list)}, len(f1_p_list) = {len(f1_p_list)}, sum(f1_l_list) = {sum(f1_l_list)}, len(f1_l_list) = {len(f1_l_list)}')
-    #
-    # print(f'Total F1 Score: {(sum(f1_p_list) + sum(f1_l_list)) / (2 * len(f1_p_list)):.4f}      '
-    #       f'Primary: {sum(f1_p_list) / len(f1_p_list):.4f}      Lymph: {sum(f1_l_list) / len(f1_l_list):.4f}')
-    # print(f'Total DSC: {val.mean()/len(data_loader):.4f}      Primary: {val[0]/len(data_loader):.4f}     Lymph: {val[1]/len(data_loader):.4f}')
-
-    # for batch_idx, batch in enumerate(data_loader):
-    #     with torch.no_grad():
-    #         # input_tensor, target = prepare_input(input_tuple=input_tuple, args=self.args)
-    #         input_tensor, input_res, target = batch
-    #         # print(f'input tuple len = {len(input_tuple)}, input tuple = {input_tuple}')
-    #         # print(f'target type = {type(target)}, target = {target.nonzero()}')
-    #         #input_tensor, input_res, target = input_tensor.cuda(), input_res.cuda(), target.cuda()
-    #         #input_tensor, input_res, target = input_tensor.cpu(), input_res.cpu(), target.cpu()
-    #         input_tensor.requires_grad = False
-    #         input_res.requires_grad = False
-    #
-    #         output = model([input_tensor, input_res])
-    #         dice_score = compute_channel_dice(output, target)
-    #         print(f'output size = {output.size()}, target = {target.size()}')
-    #         print(f'Dice score: {dice_score}')
-    #
-    #         # print(f'bf output type = {output.type()}, output size = {output.size()}, ')
-    #         output = output.squeeze()
-    #         # loss, per_ch_score = criterion(output, target)
-    #
-    #         # print(f'af output size = {output.size()}')
-    #         output_arr = output.cpu().numpy()
-    #         print(f'output_arr type = {type(output_arr)}, output_arr size = {np.shape(output_arr)}')
-    #         print(f'output_arr min = {np.min(output_arr)}, output_arr max = {np.max(output_arr)}')
-    #
-    #         # file_name1 = f'pred_2ch_1_{batch_idx}.nii.gz'
-    #         # file_name2 = f'pred_2ch_2_{batch_idx}.nii.gz'
-    #         file_name = f'ConResNet_{batch_idx}.nii.gz'
-    #
-    #         # os.chdir('E:/HSE/Medical_Segmentation/saved_models/UNET3D_checkpoints/UNET3D_17_08___07_06_thyroid_/prediction/')
-    #         # os.mkdir('prediction/')
-    #         # print(f'current: {os.getcwd()}')
-    #         # os.mkdir('prediction/')
-    #         # output_arr = np.where(output_arr > 0, 1, (np.where(output_arr < -3, 0, 1)))
-    #
-    #         # set threshold to the predicted image
-    #         # output_arr = np.where(output_arr > 0, 1, 0)
-    #
-    #         # create combined array of left and right labels
-    #         output_combined_arr = output_arr[0, :, :, :] + output_arr[1, :, :, :]
-    #
-    #         # output_img_1 = sitk.GetImageFromArray(output_arr[0, :, :, :])
-    #         # output_img_2 = sitk.GetImageFromArray(output_arr[1, :, :, :])
-    #         # output_combined = output_img_1 + output_img_2
-    #         # output_combined_arr = sitk.GetArrayFromImage(output_combined)
-    #
-    #         # if value is 2, change to 1
-    #         output_combined_arr = np.where(output_combined_arr > 1, 1, output_combined_arr)
-    #         # print(f'output_combined_arr max = {output_combined_arr.max()}')
-    #         output_combined = sitk.GetImageFromArray(output_combined_arr)
-    #         # print(f'output_img type = {type(output_img)}, output_img size = {output_img.size()}')
-    #         os.chdir(path_list[batch_idx])
-    #         # sitk.WriteImage(output_img_1[:, :, :], file_name1)
-    #         # sitk.WriteImage(output_img_2[:, :, :], file_name2)
-    #         # sitk.WriteImage(output_combined[:, :, :], file_name)
-    #         print(f'{file_name} saved in {os.getcwd()}')
-    #         print(f'prediction done -------------------------------\n')
-    #         # print(f'output type = {output.type()}, output size = {output.size()}')
-    #     # break
-
 
 _, _, pred_loader = dataset.lung_dataloader.generate_lung_dataset()
-PATH = 'F:/ConResNet/snapshots/ConResNet_0917_1954'
-# model_path = PATH + 'UNET3D_29_06___17_24_thyroid_/UNET3D_29_06___17_24_thyroid__BEST.pth'
-# model_path = PATH + 'UNET3D_29_06___17_24_thyroid_/UNET3D_29_06___17_24_thyroid__last_epoch.pth'
+PATH = 'F:/ContextLearning/snapshots/ConResNet_1001_1113'
 
 predictor(PATH=PATH, data_loader=pred_loader)

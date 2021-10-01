@@ -296,7 +296,7 @@ def compute_channel_dice(input, target, epsilon=1e-6, weight=None):
     dice = 2 * intersect / denominator
 
     #print(f'target max = {torch.max(target)}, input = {torch.max(input)}')
-    print(f'intersect = {intersect}, denom = {denominator}')
+    # print(f'intersect = {intersect}, denom = {denominator}')
     # print(f'dice = {dice}, shape = {dice.size()}')
     return dice.cpu().data.numpy()
 

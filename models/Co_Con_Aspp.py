@@ -465,14 +465,14 @@ class CoConNet(nn.Module):
 
         # x_0 = self.fusionConv(x_0)
         # x_1 = self.fusionConv_2(x_1)
-        print(f'bf aspp x_0 = {x_0.size()}, x1 = {x_1.size()}')
+        # print(f'bf aspp x_0 = {x_0.size()}, x1 = {x_1.size()}')
         #bf aspp x_0 = torch.Size([1, 192, 10, 16, 20]), x1 = torch.Size([1, 192, 10, 16, 20])
         #af aspp x_0 = torch.Size([1, 96, 3, 5, 6]), x1 = torch.Size([1, 96, 3, 5, 6])
         # x_0_res = x_0
         # x_1_res = x_1
         x_0 = self.aspp1(x_0)
         x_1 = self.aspp2(x_1)
-        print(f'af aspp x_0 = {x_0.size()}, x1 = {x_1.size()}')
+        # print(f'af aspp x_0 = {x_0.size()}, x1 = {x_1.size()}')
         # x_0 += x_0_res
         # x_1 += x_1_res
         x = torch.cat([x_0, x_1], dim=1)
