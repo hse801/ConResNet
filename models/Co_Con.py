@@ -5,7 +5,7 @@ import torch
 import numpy as np
 import scipy.ndimage as ndimage
 
-# test
+
 class ConvStd(nn.Conv3d):
 
     def __init__(self, in_channels, out_channels, kernel_size, stride=(1,1,1), padding=(0,0,0), dilation=(1,1,1), groups=1, bias=False):
